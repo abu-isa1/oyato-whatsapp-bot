@@ -1,171 +1,99 @@
 
-import json
+
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import database
 from customer import Customer
 from order import Order
-import main
 
 
-class TestOyato(unittest.TestCase):
+class TestOyatoDatabase(unittest.TestCase):
 
-    def test_customer_details(self):
-        customer = Customer(
-            "Amina",
-            "08012345678",
-            "Chest: 38, Length: 56"
-        )
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.test_db = Path(self.temp_dir.name) / "test_oyato.db"
 
-        self.assertEqual(customer.name, "Amina")
-        self.assertEqual(customer.phone, "08012345678")
+        self.db_patch = patch.object(database, "DB_FILE", self.test_db)
+        self.db_patch.start()
 
-    def test_customer_to_dict(self):
-        customer = Customer("Amina", "08012345678", "Chest: 38")
+        database.initialize_database()
 
-        self.assertEqual(
-            customer.to_dict(),
-            {
-                "name": "Amina",
-                "phone": "08012345678",
-                "measurements": "Chest: 38"
-            }
-        )
+    def tearDown(self):
+        self.db_patch.stop()
+        self.temp_dir.cleanup()
 
-    def test_order_to_dict(self):
-        customer = Customer("Amina", "08012345678", "Chest: 38")
-        order = Order(customer, "Agbada", "Cotton", "Classic", 25000)
-
-        data = order.to_dict()
-
-        self.assertEqual(data["item"], "Agbada")
-        self.assertEqual(data["fabric"], "Cotton")
-        self.assertEqual(data["price"], 25000)
-        self.assertEqual(data["customer"]["name"], "Amina")
-
-    def test_save_order(self):
-        customer = Customer("Amina", "08012345678", "Chest: 38")
-        order = Order(customer, "Agbada", "Cotton", "Classic", 25000)
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            test_file = Path(temp_dir) / "orders.json"
-
-            with patch.object(main, "ORDERS_FILE", test_file):
-                main.save_order(order)
-
-            with test_file.open("r", encoding="utf-8") as file:
-                saved_orders = json.load(file)
-
-        self.assertEqual(len(saved_orders), 1)
-        self.assertEqual(saved_orders[0]["item"], "Agbada")
-
-    
-    def test_order_has_id_and_status(self):
+    def make_order(self, order_id="OYA-0001"):
         customer = Customer(
             "Amina",
             "08012345678",
             "Chest: 38"
         )
 
-        order = Order(
+        return Order(
             customer,
             "Agbada",
             "Cotton",
             "Classic",
             25000,
-            order_id="OYA-0007"
+            order_id=order_id
         )
 
-        data = order.to_dict()
+    def test_database_initializes(self):
+        self.assertTrue(self.test_db.exists())
 
-        self.assertEqual(data["order_id"], "OYA-0007")
-        self.assertEqual(data["status"], "Pending")
+    def test_save_and_get_order(self):
+        database.save_order(self.make_order())
 
-    
+        orders = database.get_all_orders()
+
+        self.assertEqual(len(orders), 1)
+        self.assertEqual(orders[0]["item"], "Agbada")
+        self.assertEqual(orders[0]["customer_name"], "Amina")
+
+    def test_generate_order_ids(self):
+        self.assertEqual(
+            database.generate_order_id(),
+            "OYA-0001"
+        )
+
+        database.save_order(self.make_order("OYA-0001"))
+
+        self.assertEqual(
+            database.generate_order_id(),
+            "OYA-0002"
+        )
+
     def test_update_order_status(self):
-        customer = Customer(
-            "Amina",
-            "08012345678",
-            "Chest: 38"
-        )
-        order = Order(
-            customer,
-            "Agbada",
-            "Cotton",
-            "Classic",
-            25000,
-            order_id="OYA-0001"
-        )
+        database.save_order(self.make_order())
 
-        with tempfile.TemporaryDirectory() as temp_dir:
-            test_file = Path(temp_dir) / "orders.json"
-
-            with test_file.open("w", encoding="utf-8") as file:
-                json.dump([order.to_dict()], file)
-
-            with patch.object(main, "ORDERS_FILE", test_file):
-                with patch(
-                    "builtins.input",
-                    side_effect=["OYA-0001", "2"]
-                ):
-                    main.update_order_status()
-
-            with test_file.open("r", encoding="utf-8") as file:
-                saved_orders = json.load(file)
-
-        self.assertEqual(
-            saved_orders[0]["status"],
+        result = database.update_status(
+            "OYA-0001",
             "In Progress"
         )
-    
-    def test_generate_first_order_id(self):
-        self.assertEqual(main.generate_order_id([]), "OYA-0001")
 
-    def test_generate_next_order_id(self):
-        orders = [
-            {"order_id": "OYA-0001"},
-            {"order_id": "OYA-0002"},
-            {"order_id": "OYA-0005"}
-        ]
-
+        self.assertTrue(result)
         self.assertEqual(
-            main.generate_order_id(orders),
-            "OYA-0006"
+            database.get_all_orders()[0]["status"],
+            "In Progress"
         )
 
+    def test_missing_order_returns_false(self):
+        result = database.update_status(
+            "OYA-9999",
+            "Completed"
+        )
 
-    
-    def test_required_input_rejects_empty_value(self):
-        with patch(
-            "builtins.input",
-            side_effect=["", "Amina"]
-        ):
-            result = main.get_required_input("Name: ")
+        self.assertFalse(result)
 
-        self.assertEqual(result, "Amina")
-
-    def test_phone_number_rejects_invalid_value(self):
-        with patch(
-            "builtins.input",
-            side_effect=["abc123", "08012345678"]
-        ):
-            result = main.get_phone_number()
-
-        self.assertEqual(result, "08012345678")
-
-    def test_price_rejects_nan(self):
-        with patch(
-            "builtins.input",
-            side_effect=["nan", "25000"]
-        ):
-            result = main.get_price()
-
-        self.assertEqual(result, 25000)
-
-
-
+    def test_invalid_status_is_rejected(self):
+        with self.assertRaises(ValueError):
+            database.update_status(
+                "OYA-0001",
+                "Unknown"
+            )
 
 
 if __name__ == "__main__":

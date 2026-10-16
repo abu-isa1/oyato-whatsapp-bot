@@ -1,50 +1,7 @@
-import math
-import re
-import json
-from pathlib import Path
 
 from customer import Customer
 from order import Order
-
-ORDERS_FILE = Path(__file__).with_name("orders.json")
-
-
-def load_orders():
-    if not ORDERS_FILE.exists():
-        return []
-
-    try:
-        with ORDERS_FILE.open("r", encoding="utf-8") as file:
-            data = json.load(file)
-            return data if isinstance(data, list) else []
-    except (json.JSONDecodeError, OSError):
-        print("Warning: Could not read saved orders.")
-        return []
-
-
-def save_order(order):
-    orders = load_orders()
-    orders.append(order.to_dict())
-
-    with ORDERS_FILE.open("w", encoding="utf-8") as file:
-        json.dump(orders, file, indent=4, ensure_ascii=False)
-
-
-
-def get_price():
-    while True:
-        try:
-            price = float(input("Enter the agreed price (NGN): ₦"))
-
-            if not math.isfinite(price) or price < 0:
-                print("Enter a finite, non-negative price.")
-                continue
-
-            return price
-
-        except ValueError:
-            print("Please enter a valid number.")
-
+import database
 
 
 def get_required_input(prompt):
@@ -60,56 +17,70 @@ def get_required_input(prompt):
 def get_phone_number():
     while True:
         phone = input("Phone number: ").strip()
-
         allowed_characters = set("0123456789+ -()")
 
         if (
-            all(character in allowed_characters for character in phone)
-            and sum(character.isdigit() for character in phone) >= 7
+            all(char in allowed_characters for char in phone)
+            and sum(char.isdigit() for char in phone) >= 7
         ):
             return phone
 
-        print("Enter a valid phone number using digits and phone symbols.")
+        print("Enter a valid phone number.")
+
+
+def get_price():
+    while True:
+        try:
+            price = float(input("Enter agreed price (NGN): ₦"))
+
+            if price < 0 or price == float("inf") or price != price:
+                print("Enter a valid, non-negative price.")
+                continue
+
+            return price
+
+        except ValueError:
+            print("Please enter a valid number.")
+
 
 def create_order():
     print("\n--- New Clothing Order ---")
 
-   
     name = get_required_input("Customer name: ")
     phone = get_phone_number()
-
-    measurements = get_required_input(
-        "Measurements (e.g. chest, length, waist): "
-    )
-
-    item = get_required_input("Clothing item (e.g. Agbada): ")
+    measurements = get_required_input("Measurements: ")
+    item = get_required_input("Clothing item: ")
     fabric = get_required_input("Fabric type: ")
-    style = get_required_input("Style or design description: ")
-
-
+    style = get_required_input("Style or design: ")
     price = get_price()
 
+    order_id = database.generate_order_id()
+
     customer = Customer(name, phone, measurements)
-
-    order_id = generate_order_id(load_orders())
-
     order = Order(
-        customer,item,fabric,style,price,
-        order_id=order_id)
+        customer,
+        item,
+        fabric,
+        style,
+        price,
+        order_id=order_id
+    )
+
     try:
-        save_order(order)
-    except OSError:
-        print("Could not save the order. Please try again.")
+        database.save_order(order)
+    except Exception as error:
+        print(f"Could not save the order: {error}")
         return
 
     print("\nOrder saved successfully!")
+    print(f"Order ID: {order_id}")
     print(f"Customer: {name}")
     print(f"Item: {item}")
-    print(f"Agreed price: ₦{price:,.2f}")
+    print(f"Price: ₦{price:,.2f}")
 
 
 def view_orders():
-    orders = load_orders()
+    orders = database.get_all_orders()
 
     if not orders:
         print("\nNo saved orders yet.")
@@ -117,21 +88,57 @@ def view_orders():
 
     print("\n--- Saved Orders ---")
 
-    for number, order in enumerate(orders, start=1):
-        customer = order.get("customer", {})
-        print(f"\nOrder {number}")
-        print(f"Customer: {customer.get('name', 'Unknown')}")
-        print(f"Phone: {customer.get('phone', 'Unknown')}")
-        print(f"Item: {order.get('item', 'Unknown')}")
-        print(f"Fabric: {order.get('fabric', 'Unknown')}")
-        print(f"Style: {order.get('style', 'Unknown')}")
-        print(f"Price: ₦{order.get('price', 0):,.2f}")
-        print(f"Order ID: {order.get('order_id', 'Legacy order')}")
-        print(f"Status: {order.get('status', 'Pending')}")
+    for order in orders:
+        print(f"\nOrder ID: {order['order_id']}")
+        print(f"Customer: {order['customer_name']}")
+        print(f"Phone: {order['phone']}")
+        print(f"Item: {order['item']}")
+        print(f"Fabric: {order['fabric']}")
+        print(f"Style: {order['style']}")
+        print(f"Price: ₦{order['price']:,.2f}")
+        print(f"Status: {order['status']}")
 
+
+def update_order_status():
+    orders = database.get_all_orders()
+
+    if not orders:
+        print("\nNo saved orders to update.")
+        return
+
+    order_id = input("Enter order ID: ").strip().upper()
+
+    if not any(order["order_id"] == order_id for order in orders):
+        print("Order not found.")
+        return
+
+    print("\n1. Pending")
+    print("2. In Progress")
+    print("3. Completed")
+
+    choices = {
+        "1": "Pending",
+        "2": "In Progress",
+        "3": "Completed"
+    }
+
+    choice = input("Choose new status: ").strip()
+
+    if choice not in choices:
+        print("Invalid choice.")
+        return
+
+    updated = database.update_status(order_id, choices[choice])
+
+    if updated:
+        print(f"Order {order_id} updated to {choices[choice]}.")
+    else:
+        print("Could not find that order.")
 
 
 def main():
+    database.initialize_database()
+
     while True:
         print("\n====== OYATO ======")
         print("1. Create a clothing order")
@@ -153,75 +160,6 @@ def main():
         else:
             print("Invalid choice. Enter 1, 2, 3, or 4.")
 
-
-if __name__ == "__main__":
-    main()
-
-
-def update_order_status():
-    orders = load_orders()
-
-    if not orders:
-        print("\nNo saved orders to update.")
-        return
-
-    order_id = input("Enter the order ID: ").strip().upper()
-
-    order = next(
-        (
-            saved_order
-            for saved_order in orders
-            if saved_order.get("order_id") == order_id
-        ),
-        None
-    )
-
-    if order is None:
-        print("Order not found.")
-        return
-
-    print(f"\nCurrent status: {order.get('status', 'Pending')}")
-    print("1. Pending")
-    print("2. In Progress")
-    print("3. Completed")
-
-    choices = {
-        "1": "Pending",
-        "2": "In Progress",
-        "3": "Completed"
-    }
-
-    choice = input("Choose the new status: ").strip()
-
-    if choice not in choices:
-        print("Invalid choice.")
-        return
-
-    order["status"] = choices[choice]
-
-    try:
-        with ORDERS_FILE.open("w", encoding="utf-8") as file:
-            json.dump(orders, file, indent=4, ensure_ascii=False)
-    except OSError:
-        print("Could not save the updated status.")
-        return
-
-    print(f"Order {order_id} updated to: {order['status']}")
-
-
-def generate_order_id(orders):
-    highest_number = 0
-
-    for order in orders:
-        order_id = order.get("order_id", "")
-        match = re.fullmatch(r"OYA-(\d+)", order_id)
-
-        if match:
-            number = int(match.group(1))
-            highest_number = max(highest_number, number)
-
-    return f"OYA-{highest_number + 1:04d}"
-    
 
 if __name__ == "__main__":
     main()
