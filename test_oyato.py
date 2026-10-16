@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import database
+import main
 from customer import Customer
 from order import Order
 
@@ -94,6 +95,49 @@ class TestOyatoDatabase(unittest.TestCase):
                 "OYA-0001",
                 "Unknown"
             )
+    
+    def test_track_order_found(self):
+        database.save_order(self.make_order())
+
+        with patch("builtins.input", return_value="OYA-0001"):
+            with patch("builtins.print") as mock_print:
+                main.track_order()
+
+        printed_text = " ".join(
+            str(call) for call in mock_print.call_args_list
+        )
+
+        self.assertIn("OYA-0001", printed_text)
+        self.assertIn("Pending", printed_text)
+    
+
+    
+    def test_track_order_not_found(self):
+        with patch("builtins.input", return_value="OYA-9999"):
+            with patch("builtins.print") as mock_print:
+                main.track_order()
+
+        printed_text = " ".join(
+            str(call) for call in mock_print.call_args_list
+        )
+
+        self.assertIn("Order not found", printed_text)
+    
+    
+    def test_track_order_after_status_update(self):
+        database.save_order(self.make_order())
+        database.update_status("OYA-0001", "Completed")
+
+        with patch("builtins.input", return_value="OYA-0001"):
+            with patch("builtins.print") as mock_print:
+                main.track_order()
+
+        printed_text = " ".join(
+            str(call) for call in mock_print.call_args_list
+        )
+
+        self.assertIn("Completed", printed_text)
+        self.assertIn("Your clothing is ready!", printed_text)
 
 
 if __name__ == "__main__":
