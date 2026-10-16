@@ -137,6 +137,33 @@ class TestOyato(unittest.TestCase):
 
 
     
+    def test_required_input_rejects_empty_value(self):
+        with patch(
+            "builtins.input",
+            side_effect=["", "Amina"]
+        ):
+            result = main.get_required_input("Name: ")
+
+        self.assertEqual(result, "Amina")
+
+    def test_phone_number_rejects_invalid_value(self):
+        with patch(
+            "builtins.input",
+            side_effect=["abc123", "08012345678"]
+        ):
+            result = main.get_phone_number()
+
+        self.assertEqual(result, "08012345678")
+
+    def test_price_rejects_nan(self):
+        with patch(
+            "builtins.input",
+            side_effect=["nan", "25000"]
+        ):
+            result = main.get_price()
+
+        self.assertEqual(result, 25000)
+
 
 
 

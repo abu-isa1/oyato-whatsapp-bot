@@ -1,3 +1,4 @@
+import math
 import re
 import json
 from pathlib import Path
@@ -29,42 +30,62 @@ def save_order(order):
         json.dump(orders, file, indent=4, ensure_ascii=False)
 
 
+
 def get_price():
     while True:
         try:
             price = float(input("Enter the agreed price (NGN): ₦"))
-            if price < 0:
-                print("Price cannot be negative.")
+
+            if not math.isfinite(price) or price < 0:
+                print("Enter a finite, non-negative price.")
                 continue
+
             return price
+
         except ValueError:
             print("Please enter a valid number.")
 
 
+
+def get_required_input(prompt):
+    while True:
+        value = input(prompt).strip()
+
+        if value:
+            return value
+
+        print("This field cannot be empty.")
+
+
+def get_phone_number():
+    while True:
+        phone = input("Phone number: ").strip()
+
+        allowed_characters = set("0123456789+ -()")
+
+        if (
+            all(character in allowed_characters for character in phone)
+            and sum(character.isdigit() for character in phone) >= 7
+        ):
+            return phone
+
+        print("Enter a valid phone number using digits and phone symbols.")
+
 def create_order():
     print("\n--- New Clothing Order ---")
 
-    name = input("Customer name: ").strip()
-    if not name:
-        print("Name cannot be empty.")
-        return
+   
+    name = get_required_input("Customer name: ")
+    phone = get_phone_number()
 
-    phone = input("Phone number: ").strip()
-    if not phone:
-        print("Phone number cannot be empty.")
-        return
-
-    measurements = input(
+    measurements = get_required_input(
         "Measurements (e.g. chest, length, waist): "
-    ).strip()
+    )
 
-    item = input("Clothing item (e.g. Agbada): ").strip()
-    fabric = input("Fabric type: ").strip()
-    style = input("Style or design description: ").strip()
+    item = get_required_input("Clothing item (e.g. Agbada): ")
+    fabric = get_required_input("Fabric type: ")
+    style = get_required_input("Style or design description: ")
 
-    if not item or not fabric or not style:
-        print("Item, fabric, and style are required.")
-        return
 
     price = get_price()
 
