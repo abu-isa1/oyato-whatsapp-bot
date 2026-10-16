@@ -1,70 +1,76 @@
 # Oyato — Nigerian Fashion Order Management
 
-Oyato is a Python project exploring how technology can make it easier for Nigerian customers to place clothing orders with tailors.
+Oyato is a Python-based clothing order management project designed to explore how technology can help Nigerian tailors and their customers record and manage clothing orders more reliably.
 
-The current version is a command-line prototype that collects customer details, records clothing preferences, and saves orders locally in JSON format.
+**Project status:** Early-stage command-line prototype under active development.
 
-## Problem
+## The Problem
 
-Customers and tailors need a clearer way to record clothing orders, including the garment, fabric, style, measurements, and agreed price. Poor record-keeping can lead to misunderstandings and mistakes.
+Clothing orders often involve several details, including fabric, garment style, measurements, customer contact information, agreed prices, and delivery progress. Poor record-keeping can cause misunderstandings between customers and tailors.
+
+Oyato explores a simple digital approach to organizing this information and tracking orders.
 
 ## Current Features
 
-- Create clothing orders.
-- Record customer names and phone numbers.
-- Store clothing measurements and design preferences.
-- Record fabric types and agreed prices in Nigerian naira.
-- Save orders to a JSON file.
-- View previously saved orders.
-- Validate some user inputs.
-- Run automated tests for core functionality.
+- Create clothing orders and record customer details.
+- Record clothing preferences, measurements, fabric details, and agreed prices.
+- Validate phone numbers and whole-naira prices.
+- Store and retrieve orders using an SQLite database.
+- Generate order IDs.
+- View saved orders.
+- Update order statuses and track order progress.
+- Search for orders using a phone number.
+- Run automated tests with Python's `unittest` framework.
 
-## Technologies
+## Technology
 
-- Python 3
+- Python
+- SQLite
 - Object-oriented programming
-- JSON
-- Python `unittest`
+- Automated testing with `unittest`
+- Git and GitHub
 
 ## Getting Started
 
 ### Requirements
 
-Python 3 installed on your computer.
+Install Python 3 on your computer.
 
 ### Run the application
 
 ```bash
-python3 main.py
+python main.py
 ```
 
-### Run the tests
+### Run the automated tests
 
 ```bash
-python3 -m unittest -v test_oyato.py
+python -m unittest -v
 ```
 
 ## Project Structure
 
-- `main.py` — application menu and order management.
-- `customer.py` — customer data model.
-- `order.py` — clothing order data model.
-- `test_oyato.py` — automated tests.
-- `orders.json` — locally stored orders, created when an order is saved.
+- `main.py` — application menu, input validation, and order workflows.
+- `customer.py` — customer-related data and behavior.
+- `order.py` — clothing order data and behavior.
+- `database.py` — database operations and persistent order storage.
+- `test_oyato.py` — automated tests for core functionality.
 
-## Planned Improvements
+## What I Am Learning
 
-- Connect customers and tailors through WhatsApp.
-- Add a database for persistent order management.
-- Improve input validation and error handling.
-- Add order status tracking.
-- Protect customer information and measurements.
-- Explore features that help customers communicate clothing preferences more clearly.
+Through Oyato, I am practising how to:
 
-## Project Status
+- Break a practical problem into smaller software tasks.
+- Organize Python code into separate modules.
+- Store and retrieve structured data.
+- Validate user input and handle invalid entries.
+- Write automated tests and debug failures.
+- Use Git and GitHub to track and publish development progress.
 
-Early-stage prototype. The current version is intended for learning, experimentation, and further development; it is not yet a production-ready service.
+## Next Steps
 
-## About the Project
+Planned improvements include clearer user feedback, stronger testing, easier demonstrations, and exploring ways to help customers and tailors communicate about clothing orders.
 
-Oyato is an ongoing project focused on exploring practical technology solutions for Nigerian fashion businesses.
+## Limitations
+
+Oyato is currently a command-line prototype. It is not yet a deployed web or mobile application, and WhatsApp integration is not yet implemented. The project is being developed incrementally, with reliability and practical usefulness as priorities.
