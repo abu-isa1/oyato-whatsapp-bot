@@ -83,6 +83,43 @@ class TestOyato(unittest.TestCase):
         self.assertEqual(data["order_id"], "OYA-0007")
         self.assertEqual(data["status"], "Pending")
 
+    
+    def test_update_order_status(self):
+        customer = Customer(
+            "Amina",
+            "08012345678",
+            "Chest: 38"
+        )
+        order = Order(
+            customer,
+            "Agbada",
+            "Cotton",
+            "Classic",
+            25000,
+            order_id="OYA-0001"
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            test_file = Path(temp_dir) / "orders.json"
+
+            with test_file.open("w", encoding="utf-8") as file:
+                json.dump([order.to_dict()], file)
+
+            with patch.object(main, "ORDERS_FILE", test_file):
+                with patch(
+                    "builtins.input",
+                    side_effect=["OYA-0001", "2"]
+                ):
+                    main.update_order_status()
+
+            with test_file.open("r", encoding="utf-8") as file:
+                saved_orders = json.load(file)
+
+        self.assertEqual(
+            saved_orders[0]["status"],
+            "In Progress"
+        )
+
 
     
 

@@ -109,12 +109,14 @@ def view_orders():
         print(f"Status: {order.get('status', 'Pending')}")
 
 
+
 def main():
     while True:
         print("\n====== OYATO ======")
         print("1. Create a clothing order")
         print("2. View saved orders")
-        print("3. Exit")
+        print("3. Update order status")
+        print("4. Exit")
 
         choice = input("Choose an option: ").strip()
 
@@ -123,10 +125,68 @@ def main():
         elif choice == "2":
             view_orders()
         elif choice == "3":
+            update_order_status()
+        elif choice == "4":
             print("Thank you for using Oyato!")
             break
         else:
-            print("Invalid choice. Enter 1, 2, or 3.")
+            print("Invalid choice. Enter 1, 2, 3, or 4.")
+
+
+if __name__ == "__main__":
+    main()
+
+
+def update_order_status():
+    orders = load_orders()
+
+    if not orders:
+        print("\nNo saved orders to update.")
+        return
+
+    order_id = input("Enter the order ID: ").strip().upper()
+
+    order = next(
+        (
+            saved_order
+            for saved_order in orders
+            if saved_order.get("order_id") == order_id
+        ),
+        None
+    )
+
+    if order is None:
+        print("Order not found.")
+        return
+
+    print(f"\nCurrent status: {order.get('status', 'Pending')}")
+    print("1. Pending")
+    print("2. In Progress")
+    print("3. Completed")
+
+    choices = {
+        "1": "Pending",
+        "2": "In Progress",
+        "3": "Completed"
+    }
+
+    choice = input("Choose the new status: ").strip()
+
+    if choice not in choices:
+        print("Invalid choice.")
+        return
+
+    order["status"] = choices[choice]
+
+    try:
+        with ORDERS_FILE.open("w", encoding="utf-8") as file:
+            json.dump(orders, file, indent=4, ensure_ascii=False)
+    except OSError:
+        print("Could not save the updated status.")
+        return
+
+    print(f"Order {order_id} updated to: {order['status']}")
+
 
 
 if __name__ == "__main__":
