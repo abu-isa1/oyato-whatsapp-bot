@@ -69,8 +69,12 @@ def create_order():
     price = get_price()
 
     customer = Customer(name, phone, measurements)
-    order = Order(customer, item, fabric, style, price)
 
+    order_id = f"OYA-{len(load_orders()) + 1:04d}"
+
+    order = Order(
+        customer,item,fabric,style,price,
+        order_id=order_id)
     try:
         save_order(order)
     except OSError:
@@ -101,6 +105,8 @@ def view_orders():
         print(f"Fabric: {order.get('fabric', 'Unknown')}")
         print(f"Style: {order.get('style', 'Unknown')}")
         print(f"Price: ₦{order.get('price', 0):,.2f}")
+        print(f"Order ID: {order.get('order_id', 'Legacy order')}")
+        print(f"Status: {order.get('status', 'Pending')}")
 
 
 def main():

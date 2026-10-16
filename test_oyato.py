@@ -61,6 +61,33 @@ class TestOyato(unittest.TestCase):
         self.assertEqual(len(saved_orders), 1)
         self.assertEqual(saved_orders[0]["item"], "Agbada")
 
+    
+    def test_order_has_id_and_status(self):
+        customer = Customer(
+            "Amina",
+            "08012345678",
+            "Chest: 38"
+        )
+
+        order = Order(
+            customer,
+            "Agbada",
+            "Cotton",
+            "Classic",
+            25000,
+            order_id="OYA-0007"
+        )
+
+        data = order.to_dict()
+
+        self.assertEqual(data["order_id"], "OYA-0007")
+        self.assertEqual(data["status"], "Pending")
+
+
+    
+
+
+
 
 if __name__ == "__main__":
     unittest.main()
