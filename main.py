@@ -1,4 +1,3 @@
-
 from customer import Customer
 from order import Order
 import database
@@ -14,33 +13,55 @@ def get_required_input(prompt):
         print("This field cannot be empty.")
 
 
+
+
 def get_phone_number():
     while True:
         phone = input("Phone number: ").strip()
         allowed_characters = set("0123456789+ -()")
+        digits = sum(char.isdigit() for char in phone)
 
         if (
-            all(char in allowed_characters for char in phone)
-            and sum(char.isdigit() for char in phone) >= 7
+            phone
+            and all(char in allowed_characters for char in phone)
+            and 7 <= digits <= 15
+            and phone.count("+") <= 1
+            and ("+" not in phone or phone.startswith("+"))
         ):
             return phone
 
         print("Enter a valid phone number.")
 
 
+
+
+
 def get_price():
     while True:
         try:
-            price = float(input("Enter agreed price (NGN): ₦"))
+            price_input = input("Enter agreed price (NGN): ₦")
 
-            if price < 0 or price == float("inf") or price != price:
-                print("Enter a valid, non-negative price.")
+            # Reject decimal points
+            if "." in price_input:
+                print(
+                    "Enter a valid, non-negative whole-naira price."
+                )
+                continue
+
+            price = int(price_input)
+
+            if price < 0:
+                print(
+                    "Enter a valid, non-negative whole-naira price."
+                )
                 continue
 
             return price
 
         except ValueError:
             print("Please enter a valid number.")
+
+
 
 
 def create_order():

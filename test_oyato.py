@@ -215,6 +215,119 @@ class TestOyatoDatabase(unittest.TestCase):
             ["OYA-0001", "OYA-0002"]
         )
 
+    
+    def test_get_phone_number_accepts_international_number(self):
+        with patch(
+            "builtins.input",
+            return_value="+1 (202) 555-0123"
+        ):
+            result = main.get_phone_number()
+
+        self.assertEqual(result, "+1 (202) 555-0123")
+
+    def test_get_phone_number_rejects_too_few_digits(self):
+        with patch(
+            "builtins.input",
+            side_effect=["12345", "08012345678"]
+        ):
+            with patch("builtins.print") as mock_print:
+                result = main.get_phone_number()
+
+        self.assertEqual(result, "08012345678")
+        mock_print.assert_called_once_with(
+            "Enter a valid phone number."
+        )
+
+    def test_get_phone_number_rejects_letters(self):
+        with patch(
+            "builtins.input",
+            side_effect=["abc1234567", "08012345678"]
+        ):
+            with patch("builtins.print") as mock_print:
+                result = main.get_phone_number()
+
+        self.assertEqual(result, "08012345678")
+        mock_print.assert_called_once_with(
+            "Enter a valid phone number."
+        )
+
+    
+    def test_get_price_accepts_valid_price(self):
+        with patch(
+            "builtins.input",
+            return_value="25000"
+        ):
+            result = main.get_price()
+
+        self.assertEqual(result, 25000)
+
+    
+    def test_get_price_rejects_negative_price(self):
+        with patch(
+            "builtins.input",
+            side_effect=["-500", "25000"]
+        ):
+            with patch("builtins.print") as mock_print:
+                result = main.get_price()
+
+        self.assertEqual(result, 25000)
+        mock_print.assert_called_once_with(
+            "Enter a valid, non-negative whole-naira price."
+        )
+
+    
+    def test_get_price_rejects_letters(self):
+        with patch(
+            "builtins.input",
+            side_effect=["hello", "25000"]
+        ):
+            with patch("builtins.print") as mock_print:
+                result = main.get_price()
+
+        self.assertEqual(result, 25000)
+        mock_print.assert_called_once_with(
+            "Please enter a valid number."
+        )
+
+ 
+    def test_get_price_rejects_non_finite_values(self):
+        with patch(
+            "builtins.input",
+            side_effect=["inf", "-inf", "nan", "25000"]
+        ):
+            with patch("builtins.print") as mock_print:
+                result = main.get_price()
+
+        self.assertEqual(result, 25000)
+        self.assertEqual(mock_print.call_count, 3)
+
+
+    def test_get_price_rejects_decimal_price(self):
+        with patch(
+            "builtins.input",
+            side_effect=["25000.50", "25000"]
+        ):
+            with patch("builtins.print") as mock_print:
+                result = main.get_price()
+
+        self.assertEqual(result, 25000)
+        mock_print.assert_called_once_with(
+        "Enter a valid, non-negative whole-naira price."
+    )
+
+
+    def test_get_price_rejects_decimal_with_zero_fraction(self):
+        with patch(
+            "builtins.input",
+            side_effect=["25000.0", "25000"]
+        ):
+            with patch("builtins.print") as mock_print:
+                result = main.get_price()
+
+        self.assertEqual(result, 25000)
+        mock_print.assert_called_once_with(
+            "Enter a valid, non-negative whole-naira price."
+        )
 
 
 
