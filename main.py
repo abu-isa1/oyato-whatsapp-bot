@@ -1,4 +1,4 @@
-
+import re
 import json
 from pathlib import Path
 
@@ -70,7 +70,7 @@ def create_order():
 
     customer = Customer(name, phone, measurements)
 
-    order_id = f"OYA-{len(load_orders()) + 1:04d}"
+    order_id = generate_order_id(load_orders())
 
     order = Order(
         customer,item,fabric,style,price,
@@ -188,6 +188,19 @@ def update_order_status():
     print(f"Order {order_id} updated to: {order['status']}")
 
 
+def generate_order_id(orders):
+    highest_number = 0
+
+    for order in orders:
+        order_id = order.get("order_id", "")
+        match = re.fullmatch(r"OYA-(\d+)", order_id)
+
+        if match:
+            number = int(match.group(1))
+            highest_number = max(highest_number, number)
+
+    return f"OYA-{highest_number + 1:04d}"
+    
 
 if __name__ == "__main__":
     main()

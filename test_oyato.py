@@ -119,6 +119,21 @@ class TestOyato(unittest.TestCase):
             saved_orders[0]["status"],
             "In Progress"
         )
+    
+    def test_generate_first_order_id(self):
+        self.assertEqual(main.generate_order_id([]), "OYA-0001")
+
+    def test_generate_next_order_id(self):
+        orders = [
+            {"order_id": "OYA-0001"},
+            {"order_id": "OYA-0002"},
+            {"order_id": "OYA-0005"}
+        ]
+
+        self.assertEqual(
+            main.generate_order_id(orders),
+            "OYA-0006"
+        )
 
 
     
