@@ -136,6 +136,39 @@ def update_order_status():
         print("Could not find that order.")
 
 
+
+def track_order():
+    print("\n--- Track Your Clothing Order ---")
+
+    order_id = input("Enter your order ID: ").strip().upper()
+
+    if not order_id:
+        print("Please enter an order ID.")
+        return
+
+    orders = database.get_all_orders()
+
+    for order in orders:
+        if order["order_id"] == order_id:
+            print("\n--- Order Details ---")
+            print(f"Order ID: {order['order_id']}")
+            print(f"Clothing item: {order['item']}")
+            print(f"Status: {order['status']}")
+
+            if order["status"] == "Pending":
+                print("Your order is waiting to be started.")
+            elif order["status"] == "In Progress":
+                print("Your tailor is working on your clothing.")
+            elif order["status"] == "Completed":
+                print("Your clothing is ready!")
+
+            return
+
+    print("Order not found. Please check your order ID.")
+
+
+
+
 def main():
     database.initialize_database()
 
@@ -144,7 +177,8 @@ def main():
         print("1. Create a clothing order")
         print("2. View saved orders")
         print("3. Update order status")
-        print("4. Exit")
+        print("4. Track an order")
+        print("5. Exit")
 
         choice = input("Choose an option: ").strip()
 
@@ -155,11 +189,14 @@ def main():
         elif choice == "3":
             update_order_status()
         elif choice == "4":
+            track_order()
+        elif choice == "5":
             print("Thank you for using Oyato!")
             break
         else:
-            print("Invalid choice. Enter 1, 2, 3, or 4.")
+            print("Invalid choice. Enter 1, 2, 3, 4, or 5.")
 
 
 if __name__ == "__main__":
     main()
+
