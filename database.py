@@ -82,6 +82,18 @@ def get_all_orders():
         """).fetchall()
 
         return [dict(row) for row in rows]
+    
+
+def search_orders_by_phone(phone):
+    with get_connection() as connection:
+        rows = connection.execute("""
+            SELECT * FROM orders
+            WHERE phone = ?
+            ORDER BY order_id
+        """, (phone,)).fetchall()
+
+        return [dict(row) for row in rows]
+
 
 
 def update_status(order_id, status):

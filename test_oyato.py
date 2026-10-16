@@ -139,6 +139,84 @@ class TestOyatoDatabase(unittest.TestCase):
         self.assertIn("Completed", printed_text)
         self.assertIn("Your clothing is ready!", printed_text)
 
+    
+    def test_search_orders_by_phone(self):
+        database.save_order(self.make_order("OYA-0001"))
+
+        results = database.search_orders_by_phone("08012345678")
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["order_id"], "OYA-0001")
+        self.assertEqual(results[0]["phone"], "08012345678")
+
+    def test_search_orders_by_phone_not_found(self):
+        results = database.search_orders_by_phone("08099999999")
+
+        self.assertEqual(results, [])
+    
+    
+    def test_search_orders_by_phone_displays_order(self):
+        database.save_order(self.make_order())
+
+        with patch("builtins.input", return_value="08012345678"):
+            with patch("builtins.print") as mock_print:
+                main.search_orders_by_phone()
+
+        printed_text = " ".join(
+            str(call) for call in mock_print.call_args_list
+        )
+
+        self.assertIn("OYA-0001", printed_text)
+        self.assertIn("Agbada", printed_text)
+        self.assertIn("Pending", printed_text)
+
+    def test_search_orders_by_phone_displays_not_found(self):
+        with patch("builtins.input", return_value="08099999999"):
+            with patch("builtins.print") as mock_print:
+                main.search_orders_by_phone()
+
+        printed_text = " ".join(
+            str(call) for call in mock_print.call_args_list
+        )
+
+        self.assertIn("No orders found", printed_text)
+
+    def test_search_orders_by_phone_rejects_empty_input(self):
+        with patch("builtins.input", return_value=""):
+            with patch("builtins.print") as mock_print:
+                main.search_orders_by_phone()
+
+        printed_text = " ".join(
+            str(call) for call in mock_print.call_args_list
+        )
+
+        self.assertIn("Please enter a phone number", printed_text)
+
+    
+    def test_search_orders_by_phone_finds_multiple_orders(self):
+        database.save_order(self.make_order("OYA-0001"))
+
+        customer = Customer("Amina", "08012345678", "Chest: 38")
+        second_order = Order(
+            customer,
+            "Buba",
+            "Linen",
+            "Modern",
+            15000,
+            order_id="OYA-0002"
+        )
+        database.save_order(second_order)
+
+        results = database.search_orders_by_phone("08012345678")
+
+        self.assertEqual(len(results), 2)
+        self.assertEqual(
+            [order["order_id"] for order in results],
+            ["OYA-0001", "OYA-0002"]
+        )
+
+
+
 
 if __name__ == "__main__":
     unittest.main()

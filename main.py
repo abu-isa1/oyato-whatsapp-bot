@@ -168,17 +168,46 @@ def track_order():
 
 
 
+def search_orders_by_phone():
+    print("\n--- Search Orders by Phone Number ---")
+
+    phone = input("Enter customer phone number: ").strip()
+
+    if not phone:
+        print("Please enter a phone number.")
+        return
+
+    orders = database.search_orders_by_phone(phone)
+
+    if not orders:
+        print("No orders found for this phone number.")
+        return
+
+    print(f"\nFound {len(orders)} order(s):")
+
+    for order in orders:
+        print("\n--------------------")
+        print(f"Order ID: {order['order_id']}")
+        print(f"Customer: {order['customer_name']}")
+        print(f"Clothing item: {order['item']}")
+        print(f"Fabric: {order['fabric']}")
+        print(f"Status: {order['status']}")
+        print(f"Price: ₦{order['price']:,.2f}")
+
+
 
 def main():
     database.initialize_database()
 
     while True:
-        print("\n====== OYATO ======")
+        
+        print("\n--- Oyato Clothing Order System ---")
         print("1. Create a clothing order")
         print("2. View saved orders")
         print("3. Update order status")
         print("4. Track an order")
-        print("5. Exit")
+        print("5. Search orders by phone number")
+        print("6. Exit")
 
         choice = input("Choose an option: ").strip()
 
@@ -191,6 +220,8 @@ def main():
         elif choice == "4":
             track_order()
         elif choice == "5":
+            search_orders_by_phone()
+        elif choice == "6":
             print("Thank you for using Oyato!")
             break
         else:
